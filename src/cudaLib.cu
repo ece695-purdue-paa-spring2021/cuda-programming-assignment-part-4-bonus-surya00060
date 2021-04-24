@@ -225,8 +225,10 @@ int runGpuAlexNet (int argc, char ** argv)
 	oShape = ComputeConvOutput(oShape, Conv5FilterShape, Conv5Args);
 	oShape = ComputePoolOutput(oShape, MaxPool3Args);
 
-	oShape.channels = oShape.channels*oShape.width*oShape.height;
-	oShape.count =  batchSize;
+	oShape.width = oShape.channels*oShape.width*oShape.height;
+	oShape.height =  batchSize;
+	oShape.channels = 1;
+	oShape.count = 1;
 	oShape = ComputeFCOutput(oShape, FC1FilterShape);
 	oShape = ComputeFCOutput(oShape, FC2FilterShape);
 	oShape = ComputeFCOutput(oShape, FC3FilterShape);
