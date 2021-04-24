@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
 	std::cout << "ECE 695 - Lab 4 Bonus\n";
 	std::cout << "Running AlexNet on GPU! \n\n";
-	runGpuAlexNet(argc, argv);	
+	runGpuAlexNet(1);	
 	std::cout << "\n\n ... Done!\n";
 
 	return 0;

@@ -83,7 +83,7 @@ TensorShape ComputeConvOutput(TensorShape iShape, TensorShape fShape, ConvLayerA
 	oShape.width	= (iShape.width  + 2 * args.padW - fShape.width)  / args.strideW + 1;
 	oShape.channels	= (fShape.count);
 	oShape.count 	= iShape.count;
-	std::cout<<oShape<<std::endl;
+	// std::cout<<oShape<<std::endl;
 	return oShape;
 }
 
@@ -94,7 +94,7 @@ TensorShape ComputePoolOutput(TensorShape iShape, PoolLayerArgs args)
 	oShape.width	= (iShape.width  - args.poolW) / args.strideW + 1;
 	oShape.channels	= iShape.channels;
 	oShape.count 	= iShape.count;
-	std::cout<<oShape<<std::endl;
+	// std::cout<<oShape<<std::endl;
 	return oShape;
 }
 
@@ -105,7 +105,7 @@ TensorShape ComputeFCOutput(TensorShape aShape, TensorShape bShape)
 	cShape.width = bShape.width;
 	cShape.channels = aShape.channels;
 	cShape.count = aShape.count;
-	std::cout<<cShape<<std::endl;
+	// std::cout<<cShape<<std::endl;
 	return cShape;
 }
 
@@ -405,95 +405,80 @@ void poolLayer_gpu (float * input, TensorShape inShape, float * output, TensorSh
 	int outputW = outShape.width;
 	int outputChannels = outShape.channels;
 	int batchSize = outShape.count;
+
 	for(int batch = 0; batch < batchSize; ++batch)
 	{
-	for(int channel = 0; channel < outputChannels; ++channel)
-	{
-		/*
-		Since the number of threads is less than the number of inputs to be loaded, few threads do more work in load phase, 
-		while all threads do equal work in compute phase.
-		*/
-		// Load Phase
-		for(int i = 0; i < smHeight; i = i + blockDim.y)
+		for(int channel = 0; channel < outputChannels; ++channel)
 		{
-			for(int j = 0; j < smWidth; j = j + blockDim.x)
+			for(int i = 0; i < smHeight; i = i + blockDim.y)
 			{
-				int rowInp = (blockIdx.y * blockDim.y)*strideH + ty + i;
-				int colInp = (blockIdx.x * blockDim.x)*strideW + tx + j;
-
-				// Check if this thread has to load input into shared Memory by computing its write address
-				int sharedMemRow = ty + i; int sharedMemCol = tx + j;
-				if (sharedMemRow < smHeight && sharedMemCol < smWidth)
+				for(int j = 0; j < smWidth; j = j + blockDim.x)
 				{
-					// Compute Input address and if its valid, they are not edge pixels.
-					// in case of edge pixels load 0 into SharedMemory
-					if (rowInp >= 0 && rowInp < inShape.height && colInp >= 0 && colInp < inShape.width)
+					int rowInp = (blockIdx.y * blockDim.y)*strideH + ty + i;
+					int colInp = (blockIdx.x * blockDim.x)*strideW + tx + j;
+
+					int sharedMemRow = ty + i; int sharedMemCol = tx + j;
+					if (sharedMemRow < smHeight && sharedMemCol < smWidth)
 					{
-						sharedMemory[sharedMemRow*smWidth + sharedMemCol] = input[(rowInp * inShape.width + colInp) * outputChannels + channel];	
-					}
-					else
-					{
-						sharedMemory[sharedMemRow*smWidth + sharedMemCol] = 0.0;
+						if (rowInp >= 0 && rowInp < inShape.height && colInp >= 0 && colInp < inShape.width)
+						{
+							sharedMemory[sharedMemRow*smWidth + sharedMemCol] = input[batch*inShape.channels*inShape.height*inShape.width + channel*inShape.height*inShape.width + rowInp*inShape.width + colInp];	
+						}
+						else
+						{
+							sharedMemory[sharedMemRow*smWidth + sharedMemCol] = 0.0;
+						}
 					}
 				}
 			}
-		}
-		//Sync Phase
-		__syncthreads();
-		// Compute Phase
-		// Check if this thread needs to compute output
-		if (rowOut < outputH && colOut < outputW)
-		{
-			// Intialization
-			float poolVal = 0;
-			switch (args.opType)
+			__syncthreads();
+			if (rowOut < outputH && colOut < outputW)
 			{
-				case PoolOp::MaxPool:
-					poolVal =  -1000000001;
-					break;
-				case PoolOp::AvgPool:
-					poolVal = 0;
-					break;
-				case PoolOp::MinPool:
-					poolVal = 1000000001;
-					break;
-			}
-			// Loading from Shared Memory to compute output
-			for (int poolRow = 0; poolRow < poolH; ++ poolRow)
-			{
-				for (int poolCol = 0; poolCol < poolW; ++ poolCol)
+				float poolVal = 0;
+				switch (args.opType)
 				{
-					int sharedMemRow = ty*strideH + poolRow; 
-					int sharedMemCol = tx*strideW + poolCol;
-
-					float pixelVal = sharedMemory[sharedMemRow*smWidth + sharedMemCol];
-					// Taking corresponding action
-					switch (args.opType)
+					case PoolOp::MaxPool:
+						poolVal =  -1000000001;
+						break;
+					case PoolOp::AvgPool:
+						poolVal = 0;
+						break;
+					case PoolOp::MinPool:
+						poolVal = 1000000001;
+						break;
+				}
+				for (int poolRow = 0; poolRow < poolH; ++ poolRow)
+				{
+					for (int poolCol = 0; poolCol < poolW; ++ poolCol)
 					{
-						case PoolOp::MaxPool:
-							poolVal = fmax(poolVal, pixelVal);
-							break;
-						case PoolOp::AvgPool:
-							poolVal = poolVal + pixelVal;
-							break;
-						case PoolOp::MinPool:
-							poolVal = fmin(poolVal, pixelVal);
-							break;
+						int sharedMemRow = ty*strideH + poolRow; 
+						int sharedMemCol = tx*strideW + poolCol;
+
+						float pixelVal = sharedMemory[sharedMemRow*smWidth + sharedMemCol];
+						switch (args.opType)
+						{
+							case PoolOp::MaxPool:
+								poolVal = fmax(poolVal, pixelVal);
+								break;
+							case PoolOp::AvgPool:
+								poolVal = poolVal + pixelVal;
+								break;
+							case PoolOp::MinPool:
+								poolVal = fmin(poolVal, pixelVal);
+								break;
+						}
 					}
 				}
+				switch (args.opType)
+				{
+					case PoolOp::AvgPool:
+						poolVal = poolVal/(poolH*poolW);
+						break;
+				}
+				output[batch*outShape.channels*outShape.height*outShape.width + channel*outShape.height*outShape.width + rowOut*outShape.width + colOut] = poolVal;
 			}
-			// Average for AvgPool
-			switch (args.opType)
-			{
-				case PoolOp::AvgPool:
-					poolVal = poolVal/(poolH*poolW);
-					break;
-			}
-			output[(rowOut* outputW + colOut) * outputChannels + channel] = poolVal;
+			__syncthreads();			
 		}
-		// Sync Phase
-		__syncthreads();			
-	}
 	}
 }
 
@@ -577,10 +562,10 @@ float* FullyConv(float* act, TensorShape actShape, TensorShape filterShape, Gemm
 	return output;
 }
 
-int runGpuAlexNet (int argc, char ** argv)
+int runGpuAlexNet (int batch)
 {
 	// Layerwise Parameters
-	int batchSize = 1;
+	int batchSize = batch;
 	TensorShape InputTensorShape = {batchSize, 3, 227, 227};	
 	TensorShape Conv1FilterShape = {96,3, 11,11};
 	ConvLayerArgs Conv1Args = {0, 0, 4, 4, true};
@@ -648,7 +633,7 @@ int runGpuAlexNet (int argc, char ** argv)
 	act = Pooling(act, actShape, MaxPool2Args);
 	actShape = ComputePoolOutput(actShape, MaxPool2Args);
 	
-	act = Convolution(act, actShape, Conv3ilterShape, Conv3Args);
+	act = Convolution(act, actShape, Conv3FilterShape, Conv3Args);
 	actShape = ComputeConvOutput(actShape, Conv3FilterShape, Conv3Args);
 
 	act = Convolution(act, actShape, Conv4FilterShape, Conv4Args);
@@ -673,6 +658,6 @@ int runGpuAlexNet (int argc, char ** argv)
 
 	act = FullyConv(act, actShape, FC3FilterShape, args);
 	actShape = ComputeFCOutput(actShape, FC3FilterShape);
-	
+
 	return 0;
 }
