@@ -195,7 +195,7 @@
 		ConvLayerArgs & args, uint32_t batchSize);
 
 	extern int runGpuGemm (int argc, char ** argv);
-
+	
 	extern int gemmLayer_gpu (float * a, TensorShape aShape, 
 		float * b, TensorShape bShape,
 		float * c, TensorShape & cShape,
@@ -204,5 +204,7 @@
 	extern int runGpuGemm (int argc, char ** argv);
 
 	extern int evaluateGpuGemm ();
+
+	extern int runGpuAlexNet (int argc, char ** argv);
 
 #endif

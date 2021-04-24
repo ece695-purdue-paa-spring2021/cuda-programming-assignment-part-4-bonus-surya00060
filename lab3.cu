@@ -132,7 +132,13 @@ int main(int argc, char** argv) {
 			runGpuGemm(argc, argv);	
 			std::cout << "\n\n ... Done!\n";
 			break;
-
+		
+		case 16:
+			std::cout << "Running AlexNet on GPU! \n\n";
+			runGpuAlexNet(argc, argv);	
+			std::cout << "\n\n ... Done!\n";
+			break;
+		
 		default:
 			std::cout << "Hmm ... Devious, you are!\n";
 			std::cout << " Choose correctly, you must.\n";

@@ -147,4 +147,86 @@ int evaluateGpuGemm () {
 }
 
 //	STUDENT: Add functions here
+// Part 4 Starts here
+TensorShape ComputeConvOutput(TensorShape iShape, TensorShape fShape, ConvLayerArgs args)
+{
+	TensorShape oShape;
+	oShape.height 	= (iShape.height + 2 * args.padH - fShape.height) / args.strideH + 1;
+	oShape.width	= (iShape.width  + 2 * args.padW - fShape.width)  / args.strideW + 1;
+	oShape.channels	= (fShape.count);
+	oShape.count 	= iShape.count;
+	print(oShape);
+	return oShape;
+}
 
+TensorShape ComputePoolOutput(TensorShape iShape, PoolLayerArgs args)
+{
+	TensorShape oShape;
+	oShape.height 	= (iShape.height - args.poolH) / args.strideH + 1;
+	oShape.width	= (iShape.width  - args.poolW) / args.strideW + 1;
+	oShape.channels	= iShape.channels;
+	oShape.count 	= iShape.count;
+	print(oShape);
+	return oShape;
+}
+
+TensorShape ComputeFCOutput(TensorShape aShape, TensorShape bShape)
+{
+	TensorShape cShape;
+	cShape.height = aShape.height;
+	cShape.width = bShape.width;
+	cShape.channels = aShape.channels;
+	cShape.count = aShape.count;
+	print(oShape);
+	return cShape;
+}
+int runGpuAlexNet (int argc, char ** argv)
+{
+	int batchSize = 1;
+	TensorShape InputTensor = {batchSize, 3, 227, 227};	
+	TensorShape Conv1FilterShape = {96,3, 11,11};
+	ConvLayerArgs Conv1Args = {0, 0, 4, 4, true};
+
+	PoolLayerArgs MaxPool1Args = {MaxPool, 3, 3, 2, 2};
+
+	TensorShape Conv2FilterShape = {256,96, 5, 5};
+	ConvLayerArgs Conv2Args = {2, 2, 1, 1, true};
+
+	PoolLayerArgs MaxPool2Args = {MaxPool, 3, 3, 2, 2};	
+
+	TensorShape Conv3FilterShape = {384,256, 3, 3};
+	ConvLayerArgs Conv3Args = {1, 1, 1, 1, true};
+	
+	TensorShape Conv4FilterShape = {384,384, 3, 3};
+	ConvLayerArgs Conv4Args = {1, 1, 1, 1, true};
+
+	TensorShape Conv5FilterShape = {256,384, 3, 3};
+	ConvLayerArgs Conv5Args = {1, 1, 1, 1, true};
+
+	PoolLayerArgs MaxPool3Args = {MaxPool, 3, 3, 2, 2};
+
+	TensorShape FC1FilterShape = {1, 1, 9216, 4096};
+	TensorShape FC2FilterShape = {1, 1, 4096, 4096};
+	TensorShape FC3FilterShape = {1, 1, 4096, 1000};
+	GemmLayerArgs args = {8, 8, 1};
+
+	/*
+	Conv -> ReLu -> MaxPool -> Conv -> ReLu -> MaxPool -> Conv -> ReLu -> Conv -> ReLu -> Conv -> ReLu -> MaxPool
+	-> FC -> FC -> FC 
+	)
+	*/
+	TensorShape oShape;
+	oShape = ComputeConvOutput(InputTensor, Conv1FilterShape, Conv1Args);
+	oShape = ComputePoolOutput(oShape, MaxPool1Args);
+	oShape = ComputeConvOutput(oShape, Conv2FilterShape, Conv2Args);
+	oShape = ComputePoolOutput(oShape, MaxPool2Args);
+	oShape = ComputeConvOutput(oShape, Conv3FilterShape, Conv3Args);
+	oShape = ComputeConvOutput(oShape, Conv4FilterShape, Conv4Args);
+	oShape = ComputeConvOutput(oShape, Conv5FilterShape, Conv5Args);
+	oShape = ComputePoolOutput(oShape, MaxPool3Args);
+	oShape = ComputeFCOutput(oShape, FC1FilterShape);
+	oShape = ComputeFCOutput(oShape, FC2FilterShape);
+	oShape = ComputeFCOutput(oShape, FC3FilterShape);
+
+	return 0;
+}

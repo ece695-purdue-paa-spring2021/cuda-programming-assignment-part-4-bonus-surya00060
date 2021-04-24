@@ -172,5 +172,6 @@
 		GemmLayerArgs & args, uint32_t batchSize = 1);
 
 	void printTensor (float * t, TensorShape shape);
+	// Lab 4
 
 #endif
