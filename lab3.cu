@@ -16,11 +16,11 @@
 
 int main(int argc, char** argv) { 
 	std::string str;
-	int choice;
+	//int choice;
 
 	std::cout << "ECE 695 - Lab 4 Bonus\n";
 	std::cout << "Running AlexNet on GPU! \n\n";
-	runGpuAlexNet(1);	
+	runGpuAlexNet(argc, argv);	
 	std::cout << "\n\n ... Done!\n";
 
 	return 0;

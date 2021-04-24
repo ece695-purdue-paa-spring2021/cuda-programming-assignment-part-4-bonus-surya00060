@@ -562,10 +562,10 @@ float* FullyConv(float* act, TensorShape actShape, TensorShape filterShape, Gemm
 	return output;
 }
 
-int runGpuAlexNet (int batch)
+int runGpuAlexNet(int argc, char** argv)
 {
 	// Layerwise Parameters
-	int batchSize = batch;
+	int batchSize = 1;
 	TensorShape InputTensorShape = {batchSize, 3, 227, 227};	
 	TensorShape Conv1FilterShape = {96,3, 11,11};
 	ConvLayerArgs Conv1Args = {0, 0, 4, 4, true};
