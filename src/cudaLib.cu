@@ -155,7 +155,7 @@ TensorShape ComputeConvOutput(TensorShape iShape, TensorShape fShape, ConvLayerA
 	oShape.width	= (iShape.width  + 2 * args.padW - fShape.width)  / args.strideW + 1;
 	oShape.channels	= (fShape.count);
 	oShape.count 	= iShape.count;
-	print(oShape);
+	std::cout<<oShape;
 	return oShape;
 }
 
@@ -166,7 +166,7 @@ TensorShape ComputePoolOutput(TensorShape iShape, PoolLayerArgs args)
 	oShape.width	= (iShape.width  - args.poolW) / args.strideW + 1;
 	oShape.channels	= iShape.channels;
 	oShape.count 	= iShape.count;
-	print(oShape);
+	std::cout<<oShape;
 	return oShape;
 }
 
@@ -177,7 +177,7 @@ TensorShape ComputeFCOutput(TensorShape aShape, TensorShape bShape)
 	cShape.width = bShape.width;
 	cShape.channels = aShape.channels;
 	cShape.count = aShape.count;
-	print(oShape);
+	std::cout<<cShape;
 	return cShape;
 }
 int runGpuAlexNet (int argc, char ** argv)
@@ -187,12 +187,12 @@ int runGpuAlexNet (int argc, char ** argv)
 	TensorShape Conv1FilterShape = {96,3, 11,11};
 	ConvLayerArgs Conv1Args = {0, 0, 4, 4, true};
 
-	PoolLayerArgs MaxPool1Args = {MaxPool, 3, 3, 2, 2};
+	PoolLayerArgs MaxPool1Args = {PoolOp::MaxPool, 3, 3, 2, 2};
 
 	TensorShape Conv2FilterShape = {256,96, 5, 5};
 	ConvLayerArgs Conv2Args = {2, 2, 1, 1, true};
 
-	PoolLayerArgs MaxPool2Args = {MaxPool, 3, 3, 2, 2};	
+	PoolLayerArgs MaxPool2Args = {PoolOp::MaxPool, 3, 3, 2, 2};	
 
 	TensorShape Conv3FilterShape = {384,256, 3, 3};
 	ConvLayerArgs Conv3Args = {1, 1, 1, 1, true};
@@ -203,12 +203,12 @@ int runGpuAlexNet (int argc, char ** argv)
 	TensorShape Conv5FilterShape = {256,384, 3, 3};
 	ConvLayerArgs Conv5Args = {1, 1, 1, 1, true};
 
-	PoolLayerArgs MaxPool3Args = {MaxPool, 3, 3, 2, 2};
+	PoolLayerArgs MaxPool3Args = {PoolOp::MaxPool, 3, 3, 2, 2};
 
 	TensorShape FC1FilterShape = {1, 1, 9216, 4096};
 	TensorShape FC2FilterShape = {1, 1, 4096, 4096};
 	TensorShape FC3FilterShape = {1, 1, 4096, 1000};
-	GemmLayerArgs args = {8, 8, 1};
+	// GemmLayerArgs args = {8, 8, 1};
 
 	/*
 	Conv -> ReLu -> MaxPool -> Conv -> ReLu -> MaxPool -> Conv -> ReLu -> Conv -> ReLu -> Conv -> ReLu -> MaxPool
