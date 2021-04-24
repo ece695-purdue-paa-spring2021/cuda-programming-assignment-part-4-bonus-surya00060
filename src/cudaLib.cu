@@ -155,7 +155,7 @@ TensorShape ComputeConvOutput(TensorShape iShape, TensorShape fShape, ConvLayerA
 	oShape.width	= (iShape.width  + 2 * args.padW - fShape.width)  / args.strideW + 1;
 	oShape.channels	= (fShape.count);
 	oShape.count 	= iShape.count;
-	std::cout<<oShape;
+	std::cout<<oShape<<std::endl;
 	return oShape;
 }
 
@@ -166,7 +166,7 @@ TensorShape ComputePoolOutput(TensorShape iShape, PoolLayerArgs args)
 	oShape.width	= (iShape.width  - args.poolW) / args.strideW + 1;
 	oShape.channels	= iShape.channels;
 	oShape.count 	= iShape.count;
-	std::cout<<oShape;
+	std::cout<<oShape<<std::endl;
 	return oShape;
 }
 
@@ -177,7 +177,7 @@ TensorShape ComputeFCOutput(TensorShape aShape, TensorShape bShape)
 	cShape.width = bShape.width;
 	cShape.channels = aShape.channels;
 	cShape.count = aShape.count;
-	std::cout<<cShape;
+	std::cout<<cShape<<std::endl;
 	return cShape;
 }
 int runGpuAlexNet (int argc, char ** argv)
@@ -224,6 +224,9 @@ int runGpuAlexNet (int argc, char ** argv)
 	oShape = ComputeConvOutput(oShape, Conv4FilterShape, Conv4Args);
 	oShape = ComputeConvOutput(oShape, Conv5FilterShape, Conv5Args);
 	oShape = ComputePoolOutput(oShape, MaxPool3Args);
+
+	oShape.channels = oShape.channels*oShape.width*oShape.height;
+	oShape.count =  batchSize;
 	oShape = ComputeFCOutput(oShape, FC1FilterShape);
 	oShape = ComputeFCOutput(oShape, FC2FilterShape);
 	oShape = ComputeFCOutput(oShape, FC3FilterShape);
