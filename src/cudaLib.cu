@@ -564,8 +564,8 @@ float* Convolution(float* act, TensorShape actShape, TensorShape filterShape, Co
 
 	// SharedMemory Size of Input Activations
 	int channelBlocking = tileSize;
-	uint32_t smActH  = tileSize*args.strideH + fShape.height - args.strideH;
-	uint32_t smActW  = tileSize*args.strideW + fShape.width - args.strideW;
+	uint32_t smActH  = tileSize*args.strideH + filterShape.height - args.strideH;
+	uint32_t smActW  = tileSize*args.strideW + filterShape.width - args.strideW;
 	uint32_t smActD  = channelBlocking;
 	// SharedMemory Size of Filters
 	uint32_t smFilH  = filterShape.height;
