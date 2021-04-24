@@ -150,8 +150,6 @@
 	 * @param args 		PoolLayerArgs	parameters of pool operation
 	 * @return int 
 	 */
-	extern int poolLayer_gpu (float * input, TensorShape inShape,
-		float * output, TensorShape outShape, PoolLayerArgs args);
 
 	/**
 	 * @brief 
@@ -189,17 +187,10 @@
 	 * @param batchSize uint32_t		
 	 * @return int 
 	 */
-	extern int convLayer_gpu ( float * input, TensorShape iShape, 
-		float * filter, TensorShape fShape, 
-		float * bias, float * output, TensorShape & oShape, 
-		ConvLayerArgs & args, uint32_t batchSize);
 
 	extern int runGpuGemm (int argc, char ** argv);
 	
-	extern int gemmLayer_gpu (float * a, TensorShape aShape, 
-		float * b, TensorShape bShape,
-		float * c, TensorShape & cShape,
-		GemmLayerArgs & args, uint32_t batchSize);
+	
 
 	extern int runGpuGemm (int argc, char ** argv);
 

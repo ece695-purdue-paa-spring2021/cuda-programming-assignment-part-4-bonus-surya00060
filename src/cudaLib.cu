@@ -555,8 +555,8 @@ float* Convolution(float* act, TensorShape actShape, TensorShape filterShape, Co
 	cudaMallocManaged(&filter, tensorSize(filterShape)*sizeof(float));
 	cudaMallocManaged(&bias,   oShape.channels*sizeof(float));
 	cudaMallocManaged(&output, tensorSize(oShape)*sizeof(float));
-	makeCudaTensor(filter);
-	makeCudaTensor(bias);
+	makeCudaTensor(filter, filterShape);
+	makeCudaTensor(bias, output.channels);
 
 	int tileSize = 4;
 	dim3 blockDim(tileSize,tileSize, tileSize);
@@ -610,7 +610,7 @@ float* FullyConv(float* act, TensorShape actShape, TensorShape filterShape, Gemm
 	TensorShape oShape = ComputeFCOutput(actShape, filterShape);
 
 	cudaMallocManaged(&filter, tensorSize(filterShape)*sizeof(float));
-	makeCudaTensor(filter);
+	makeCudaTensor(filter, filterShape);
 
 	cudaMallocManaged(&output, tensorSize(oShape)*sizeof(float));
 
