@@ -91,23 +91,6 @@ int medianFilter_gpu (uint8_t inPixels, ImageDim imgDim,
 }
 
 
-int runGpuConv (int argc, char ** argv) {
-
-	TensorShape iShape = AlexL1_InShape;
-	TensorShape fShape = AlexL1_FilterShape;
-	ConvLayerArgs convArgs = AlexL1_ConvArgs;
-
-	std::cout << "Evaluate convolution : \n";
-	std::cout << "Input : " << iShape << " \n";
-	std::cout << "Filter : " << fShape << " \n";
-
-	TensorShape oShape;
-
-	uint64_t errorCount = evaluateGpuConv(iShape, fShape, oShape, convArgs);
-	std::cout << "Found " << errorCount << " / " << tensorSize(oShape) << " errors \n";
-	return 0;
-}
-
 
 
 
@@ -556,7 +539,8 @@ float* Convolution(float* act, TensorShape actShape, TensorShape filterShape, Co
 	cudaMallocManaged(&bias,   oShape.channels*sizeof(float));
 	cudaMallocManaged(&output, tensorSize(oShape)*sizeof(float));
 	makeCudaTensor(filter, filterShape);
-	makeCudaTensor(bias, output.channels);
+	TensorShape biasShape = {1, 1, 1, oShape.channels};
+	makeCudaTensor(bias, biasShape);
 
 	int tileSize = 4;
 	dim3 blockDim(tileSize,tileSize, tileSize);
@@ -681,7 +665,7 @@ int runGpuAlexNet (int argc, char ** argv)
 
 	float *InputTensor;
 	cudaMallocManaged(&InputTensor, tensorSize(InputTensorShape)*sizeof(float));
-	makeTensor(InputTensor);
+	makeCudaTensor(InputTensor, InputTensorShape);
 
 	return 0;
 }
