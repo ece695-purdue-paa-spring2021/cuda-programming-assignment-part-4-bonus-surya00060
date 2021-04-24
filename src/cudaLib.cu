@@ -529,8 +529,8 @@ float* Convolution(float* act, TensorShape actShape, TensorShape filterShape, Co
 	convLayer_gpu<<<gridDim, blockDim, dynamicSharedMemsize>>>(act, actShape, filter, filterShape, bias, output, oShape, args, oShape.count);
 	cudaDeviceSynchronize();
 
-	free(bias);
-	free(filter);
+	cudaFree(bias);
+	cudaFree(filter);
 
 	return output;
 }
@@ -572,6 +572,7 @@ float* FullyConv(float* act, TensorShape actShape, TensorShape filterShape, Gemm
 	
 	gemmLayer_gpu<<<gridDim, blockDim, dynamicSharedMemsize>>>(act, actShape, filter, filterShape, output, oShape, args, oShape.count);
 	cudaDeviceSynchronize();
+	cudaFree(filter);
 
 	return output;
 }
@@ -605,14 +606,14 @@ int runGpuAlexNet (int argc, char ** argv)
 	TensorShape FC1FilterShape = {1, 1, 9216, 4096};
 	TensorShape FC2FilterShape = {1, 1, 4096, 4096};
 	TensorShape FC3FilterShape = {1, 1, 4096, 1000};
-	// GemmLayerArgs args = {8, 8, 1};
+	GemmLayerArgs args = {8, 8, 1};
 
 	/*
 	Conv -> ReLu -> MaxPool -> Conv -> ReLu -> MaxPool -> Conv -> ReLu -> Conv -> ReLu -> Conv -> ReLu -> MaxPool
 	-> FC -> FC -> FC 
 	)
 	*/
-	TensorShape oShape;
+	TensorShape oShape, actShape;
 	oShape = ComputeConvOutput(InputTensorShape, Conv1FilterShape, Conv1Args);
 	oShape = ComputePoolOutput(oShape, MaxPool1Args);
 	oShape = ComputeConvOutput(oShape, Conv2FilterShape, Conv2Args);
@@ -635,5 +636,43 @@ int runGpuAlexNet (int argc, char ** argv)
 	cudaMallocManaged(&InputTensor, tensorSize(InputTensorShape)*sizeof(float));
 	makeCudaTensor(InputTensor, InputTensorShape);
 
+	float *act = Convolution(InputTensor, InputTensorShape, Conv1FilterShape, Conv1Args);
+	actShape = ComputeConvOutput(InputTensorShape, Conv1FilterShape, Conv1Args);
+
+	act = Pooling(act, actShape, MaxPool1Args);
+	actShape = ComputePoolOutput(actShape, MaxPool1Args);
+
+	act = Convolution(act, actShape, Conv2FilterShape, Conv2Args);
+	actShape = ComputeConvOutput(actShape, Conv2FilterShape, Conv2Args);
+	
+	act = Pooling(act, actShape, MaxPool2Args);
+	actShape = ComputePoolOutput(actShape, MaxPool2Args);
+	
+	act = Convolution(act, actShape, Conv3ilterShape, Conv3Args);
+	actShape = ComputeConvOutput(actShape, Conv3FilterShape, Conv3Args);
+
+	act = Convolution(act, actShape, Conv4FilterShape, Conv4Args);
+	actShape = ComputeConvOutput(actShape, Conv4FilterShape, Conv4Args);
+
+	act = Convolution(act, actShape, Conv5FilterShape, Conv5Args);
+	actShape = ComputeConvOutput(actShape, Conv5FilterShape, Conv5Args);
+
+	act = Pooling(act, actShape, MaxPool3Args);
+	actShape = ComputePoolOutput(actShape, MaxPool3Args);
+
+	actShape.width = actShape.channels*actShape.width*actShape.height;
+	actShape.height =  batchSize;
+	actShape.channels = 1;
+	actShape.count = 1;
+	
+	act = FullyConv(act, actShape, FC1FilterShape, args);
+	actShape = ComputeFCOutput(actShape, FC1FilterShape);
+
+	act = FullyConv(act, actShape, FC2FilterShape, args);
+	actShape = ComputeFCOutput(actShape, FC2FilterShape);
+
+	act = FullyConv(act, actShape, FC3FilterShape, args);
+	actShape = ComputeFCOutput(actShape, FC3FilterShape);
+	
 	return 0;
 }
