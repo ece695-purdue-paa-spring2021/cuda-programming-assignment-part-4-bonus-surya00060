@@ -527,7 +527,7 @@ float* Pooling(float* act, TensorShape actShape, PoolLayerArgs args)
 	
 	cudaMallocManaged(&output, tensorSize(oShape)*sizeof(float));
 
-	int tileSize = 4;
+	int tileSize = 16;
 	dim3 blockDim(tileSize, tileSize);
 	dim3 gridDim(ceil(oShape.height*1.0/tileSize), ceil(oShape.width*1.0/tileSize));
 
@@ -562,10 +562,10 @@ float* FullyConv(float* act, TensorShape actShape, TensorShape filterShape, Gemm
 	return output;
 }
 
-int runGpuAlexNet(int argc, char** argv)
+int runGpuAlexNet(int batchSize)
 {
 	// Layerwise Parameters
-	int batchSize = 1;
+	// int batchSize = 1;
 	TensorShape InputTensorShape = {batchSize, 3, 227, 227};	
 	TensorShape Conv1FilterShape = {96,3, 11,11};
 	ConvLayerArgs Conv1Args = {0, 0, 4, 4, true};
@@ -591,7 +591,7 @@ int runGpuAlexNet(int argc, char** argv)
 	TensorShape FC1FilterShape = {1, 1, 9216, 4096};
 	TensorShape FC2FilterShape = {1, 1, 4096, 4096};
 	TensorShape FC3FilterShape = {1, 1, 4096, 1000};
-	GemmLayerArgs args = {8, 8, 1};
+	GemmLayerArgs args = {16, 16, 1};
 
 	/*
 	Conv -> ReLu -> MaxPool -> Conv -> ReLu -> MaxPool -> Conv -> ReLu -> Conv -> ReLu -> Conv -> ReLu -> MaxPool
@@ -599,11 +599,12 @@ int runGpuAlexNet(int argc, char** argv)
 	)
 	*/
 	TensorShape oShape, actShape;
+	/* Shape Verification
 	oShape = ComputeConvOutput(InputTensorShape, Conv1FilterShape, Conv1Args);
 	oShape = ComputePoolOutput(oShape, MaxPool1Args);
 	oShape = ComputeConvOutput(oShape, Conv2FilterShape, Conv2Args);
 	oShape = ComputePoolOutput(oShape, MaxPool2Args);
-	oShape = ComputeConvOutput(oShape, Conv3FilterShape, Conv3Args);
+	oShape = ComputeConvOutput(oShape, Conv3FilterShape, Conv3Args);	
 	oShape = ComputeConvOutput(oShape, Conv4FilterShape, Conv4Args);
 	oShape = ComputeConvOutput(oShape, Conv5FilterShape, Conv5Args);
 	oShape = ComputePoolOutput(oShape, MaxPool3Args);
@@ -616,7 +617,7 @@ int runGpuAlexNet(int argc, char** argv)
 	oShape = ComputeFCOutput(oShape, FC1FilterShape);
 	oShape = ComputeFCOutput(oShape, FC2FilterShape);
 	oShape = ComputeFCOutput(oShape, FC3FilterShape);
-
+	*/
 	float *InputTensor;
 	cudaMallocManaged(&InputTensor, tensorSize(InputTensorShape)*sizeof(float));
 	makeCudaTensor(InputTensor, InputTensorShape);
@@ -645,6 +646,8 @@ int runGpuAlexNet(int argc, char** argv)
 	act = Pooling(act, actShape, MaxPool3Args);
 	actShape = ComputePoolOutput(actShape, MaxPool3Args);
 
+	// Reshape N x C x H x W tensor into 1 x 1 x N x CHW or Flattening the tensor.
+	// Since Tensor is already stored in FLAT 1D Array, no change in data layout happens.
 	actShape.width = actShape.channels*actShape.width*actShape.height;
 	actShape.height =  batchSize;
 	actShape.channels = 1;

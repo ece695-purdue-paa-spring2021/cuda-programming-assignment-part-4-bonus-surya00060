@@ -89,6 +89,6 @@
 	extern double estimatePi(uint64_t generateThreadCount, uint64_t sampleSize, 
 		uint64_t reduceThreadCount, uint64_t reduceSize);
 
-	extern int runGpuAlexNet (int argc, char ** argv);
+	extern int runGpuAlexNet (int batchSize);
 
 #endif
