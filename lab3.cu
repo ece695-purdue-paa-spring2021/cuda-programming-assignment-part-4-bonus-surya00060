@@ -20,13 +20,13 @@ int main(int argc, char** argv) {
 
 	std::cout << "ECE 695 - Lab 4 Bonus\n";
 	std::cout << "Running AlexNet on GPU! \n\n";
-	for(int i = 1; i <= 64; i=i*2)
+	for(int i = 1; i <= 512; i=i*2)
 	{
 		auto tStart = std::chrono::high_resolution_clock::now();
 		runGpuAlexNet(i);	
 		auto tEnd= std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double> time_span = (tEnd- tStart);
-		std::cout << "It took " << time_span.count() << " seconds.";
+		std::cout << "Batch Size" << i<<"  Time: " << time_span.count() << " seconds.";
 	}
 	std::cout << "\n\n ... Done!\n";
 
